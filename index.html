@@ -1,0 +1,1341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>Gym Trackerr</title>
+<link rel="icon" type="image/jpg" href="/favicon.jpg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{--bg:#070a08;--surface:#10160f;--surface-2:#161f14;--border:#223022;--green:#39ff6a;--green-dim:#1f8a4a;--green-glow:rgba(57,255,106,.35);--text:#eaf5ea;--text-dim:#8fa895;--danger:#ff6b6b}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:radial-gradient(ellipse at 50% 25%,#0d1710 0%,#070a08 60%);color:var(--text);font-family:"Inter",system-ui,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+h1,h2,h3,p{margin:0}
+button,input{font-family:inherit}
+button{-webkit-tap-highlight-color:transparent;cursor:pointer}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:100;opacity:.025;background:repeating-linear-gradient(to bottom,#fff 0,#fff 1px,transparent 1px,transparent 3px)}
+.screen{display:none;min-height:100vh;padding:24px 20px 100px;max-width:480px;margin:0 auto;position:relative}
+.screen.active{display:block}
+#splash.active,#menu.active{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.wordmark{font-family:"Teko",sans-serif;font-weight:600;letter-spacing:.1em}
+.wordmark span{color:var(--green)}
+#splash .wordmark{font-size:3rem;opacity:0;animation:fadeIn .8s ease-out 1.3s forwards}
+#menu .wordmark{font-size:2rem;margin-bottom:6px;opacity:1}
+.pulse-box{width:min(80vw,300px);margin-bottom:6px}
+.pulse-svg{width:100%;height:auto;display:block}
+#pulse-path{fill:none;stroke:var(--green);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px var(--green-glow));stroke-dasharray:500;stroke-dashoffset:500;animation:draw 1.5s ease-out forwards,pulseLoop 2.2s ease-in-out 1.6s infinite}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pulseLoop{0%,100%{opacity:.45}50%{opacity:1}}
+@keyframes fadeIn{to{opacity:1}}
+.tap-hint{opacity:0;animation:fadeIn .8s ease-out 2s forwards;color:var(--text-dim);font-size:.75rem;letter-spacing:.25em;text-transform:uppercase;margin-top:14px}
+#splash.fade-out{opacity:0;transform:scale(1.02);transition:opacity .4s ease,transform .4s ease}
+@media (prefers-reduced-motion:reduce){#pulse-path{animation:none!important;stroke-dashoffset:0!important}#splash .wordmark,.tap-hint{animation:none!important;opacity:1!important}}
+.menu-grid{display:flex;flex-direction:column;gap:16px;width:100%;margin-top:32px}
+.menu-card{display:flex;align-items:center;gap:16px;padding:22px;background:var(--surface);border:1px solid var(--border);border-radius:14px;color:var(--text);text-align:left}
+.menu-card:hover{border-color:var(--green);box-shadow:0 0 20px rgba(57,255,106,.08)}
+.menu-icon{flex:0 0 auto;width:40px;height:40px;color:var(--green)}
+.menu-icon svg{width:100%;height:100%;display:block}
+.menu-text{display:flex;flex-direction:column;gap:2px}
+.menu-label{font-family:"Teko",sans-serif;font-size:1.6rem;letter-spacing:.05em}
+.menu-sub{font-size:.78rem;color:var(--text-dim)}
+.profile-form{display:flex;flex-direction:column;gap:2px}
+.pf-row{display:flex;gap:12px}
+.pf-row .pf-group{flex:1;min-width:0}
+.pf-group{margin-bottom:16px}
+.pf-label{display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin-bottom:6px}
+.pf-input,.pf-select{width:100%;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:"Share Tech Mono",monospace;font-size:1rem}
+.pf-input:focus,.pf-select:focus{outline:2px solid var(--green);outline-offset:1px;border-color:var(--green)}
+.pf-select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238fa895' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:36px}
+.profile-save-btn{width:100%;padding:14px;border-radius:10px;margin-top:6px;background:var(--green);border:1px solid var(--green);color:#04120a;font-weight:600;font-family:"Teko",sans-serif;font-size:1.15rem;letter-spacing:.05em}
+.profile-save-btn:hover{box-shadow:0 0 16px var(--green-glow)}
+.targets-panel{margin-top:26px;padding:18px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px}
+.targets-title{font-family:"Teko",sans-serif;font-size:1.35rem;letter-spacing:.03em;color:var(--green);margin-bottom:2px}
+.targets-sub{font-size:.72rem;color:var(--text-dim);margin-bottom:16px;line-height:1.4}
+.targets-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.target-chip{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.target-chip.wide{grid-column:1/-1}
+.target-chip .tc-label{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin-bottom:4px}
+.target-chip .tc-value{font-family:"Share Tech Mono",monospace;color:var(--green);font-size:1.2rem}
+.targets-formula-note{margin-top:14px;font-size:.66rem;line-height:1.5;color:var(--text-dim)}
+.chart-panel{margin-top:20px;padding:18px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px}
+.weight-chart-wrap{width:100%;margin-top:10px;line-height:0}
+.wc-svg{width:100%;height:auto;display:block;overflow:visible}
+.wc-line{fill:none;stroke:var(--green);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px var(--green-glow))}
+.wc-dot{fill:var(--green);filter:drop-shadow(0 0 6px var(--green-glow))}
+.wc-ping{fill:none;stroke:var(--green);stroke-width:2;opacity:.55;transform-box:fill-box;transform-origin:center;animation:wcPing 2.2s ease-out infinite}
+@keyframes wcPing{0%{transform:scale(.6);opacity:.55}100%{transform:scale(2.8);opacity:0}}
+.weight-chart-meta{display:flex;justify-content:space-between;gap:10px;margin-top:12px;font-family:"Share Tech Mono",monospace;font-size:.72rem;color:var(--text-dim)}
+#wt-last-label{color:var(--green)}
+.wt-reset-btn{display:block;margin:14px auto 0;background:none;border:1px solid var(--border);color:var(--text-dim);padding:8px 14px;border-radius:8px;font-size:.7rem;letter-spacing:.03em}
+.wt-reset-btn:hover{color:var(--danger);border-color:var(--danger)}
+@media (prefers-reduced-motion:reduce){.wc-ping{animation:none!important;opacity:0!important}}
+.view-header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.back-btn{background:none;border:1px solid var(--border);color:var(--text);width:38px;height:38px;border-radius:8px;font-size:1.1rem;display:flex;align-items:center;justify-content:center}
+.back-btn:hover{border-color:var(--green);color:var(--green)}
+.view-header h2{font-family:"Teko",sans-serif;font-size:1.8rem;letter-spacing:.04em;color:var(--text)}
+.day-tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:18px}
+.day-tab{flex:0 0 auto;min-width:52px;padding:8px 12px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-family:"Share Tech Mono",monospace;font-size:.85rem;text-align:center}
+.day-tab.active{background:var(--green);color:#04120a;border-color:var(--green);box-shadow:0 0 12px var(--green-glow)}
+.day-label-row{margin-bottom:14px}
+.field-hint{display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:4px}
+.day-label-input{width:100%;background:transparent;border:none;border-bottom:1px dashed var(--border);color:var(--green);font-family:"Teko",sans-serif;font-size:1.4rem;letter-spacing:.03em;padding:4px 2px}
+.day-label-input:focus{outline:none;border-bottom-color:var(--green)}
+.empty-state{color:var(--text-dim);font-size:.9rem;text-align:center;padding:30px 10px}
+.item-card{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:10px}
+.item-main{display:flex;flex-direction:column;gap:3px;min-width:0}
+.item-name{font-family:"Teko",sans-serif;font-size:1.25rem;letter-spacing:.02em}
+.item-stats{font-family:"Share Tech Mono",monospace;color:var(--green);font-size:.85rem}
+.item-actions{display:flex;gap:6px;flex:0 0 auto}
+.icon-btn{background:none;border:none;color:var(--text-dim);padding:6px;border-radius:6px;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+.icon-btn svg{width:18px;height:18px}
+.icon-btn:hover{color:var(--text);background:var(--surface-2)}
+.icon-btn.danger:hover{color:var(--danger)}
+.add-btn{width:100%;padding:14px;border:1px dashed var(--green-dim);border-radius:10px;background:transparent;color:var(--green);font-family:"Teko",sans-serif;font-size:1.1rem;letter-spacing:.05em;margin-top:4px}
+.add-btn:hover{background:rgba(57,255,106,.06);border-color:var(--green)}
+.totals-bar{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:14px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;margin:4px 0 16px}
+.totals-bar .t-label{display:block;color:var(--text-dim);text-transform:uppercase;font-size:.65rem;letter-spacing:.08em}
+.totals-bar .t-value{font-family:"Share Tech Mono",monospace;color:var(--green);font-size:1.05rem}
+#modal-overlay{position:fixed;inset:0;background:rgba(3,6,4,.75);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+#modal-overlay.hidden{display:none}
+.modal{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--green);border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:24px 20px 28px;animation:slideUp .3s ease-out;max-height:88vh;overflow-y:auto}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+#modal-title{font-family:"Teko",sans-serif;font-size:1.5rem;letter-spacing:.03em;margin-bottom:4px}
+.modal form label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin:14px 0 6px}
+.modal form label:first-of-type{margin-top:16px}
+.modal form input{width:100%;padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:"Share Tech Mono",monospace;font-size:1rem}
+.modal form input:focus{outline:2px solid var(--green);outline-offset:1px;border-color:var(--green)}
+input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type="number"]{-moz-appearance:textfield;appearance:textfield}
+.num-stepper{display:flex;align-items:stretch;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.num-stepper:focus-within{border-color:var(--green);box-shadow:0 0 0 2px rgba(57,255,106,.15)}
+.num-stepper input{flex:1;min-width:0;text-align:center;background:transparent!important;border:none!important;border-radius:0!important}
+.num-stepper input:focus{outline:none!important}
+.step-btn{flex:0 0 auto;width:42px;background:transparent;border:none;color:var(--green);display:flex;align-items:center;justify-content:center}
+.step-btn svg{width:16px;height:16px}
+.step-minus{border-right:1px solid var(--border)}
+.step-plus{border-left:1px solid var(--border)}
+.step-btn:hover{background:rgba(57,255,106,.1)}
+.step-btn:active{background:rgba(57,255,106,.2)}
+.hide{display:none!important}
+.modal-actions{display:flex;gap:10px;margin-top:22px}
+.modal-actions button{flex:1;padding:13px;border-radius:8px;font-family:"Teko",sans-serif;font-size:1.1rem;letter-spacing:.04em}
+#modal-cancel{background:transparent;border:1px solid var(--border);color:var(--text-dim)}
+#modal-save{background:var(--green);border:1px solid var(--green);color:#04120a;font-weight:600}
+.data-actions{display:flex;gap:10px;margin-top:28px;flex-wrap:wrap;justify-content:center}
+.data-btn{background:none;border:1px solid var(--border);color:var(--text-dim);padding:9px 14px;border-radius:8px;font-size:.75rem;letter-spacing:.03em}
+.data-btn:hover{color:var(--green);border-color:var(--green)}
+.storage-note{margin-top:14px;font-size:.7rem;line-height:1.4;color:var(--text-dim);max-width:300px}
+.storage-note.hide{display:none}
+#toast-overlay,#confirm-overlay{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(3,6,4,.55);backdrop-filter:blur(8px) saturate(140%);-webkit-backdrop-filter:blur(8px) saturate(140%);opacity:0;pointer-events:none;transition:opacity .28s ease;padding:20px}
+#toast-overlay.show,#confirm-overlay.show{opacity:1;pointer-events:auto}
+.toast-liquid{position:absolute;inset:-20%;overflow:hidden;z-index:-1;filter:blur(40px) saturate(160%);opacity:.55}
+.toast-liquid span{position:absolute;border-radius:50%;background:radial-gradient(circle at 30% 30%,var(--green-glow),transparent 70%);animation:liquidDrift 9s ease-in-out infinite}
+.toast-liquid span:nth-child(1){width:340px;height:340px;top:10%;left:5%}
+.toast-liquid span:nth-child(2){width:260px;height:260px;bottom:8%;right:8%;background:radial-gradient(circle at 60% 40%,rgba(31,138,74,.4),transparent 70%);animation-delay:-3s}
+.toast-liquid span:nth-child(3){width:200px;height:200px;top:45%;left:55%;background:radial-gradient(circle at 40% 60%,rgba(57,255,106,.22),transparent 70%);animation-delay:-6s}
+@keyframes liquidDrift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(18px,-14px) scale(1.08)}66%{transform:translate(-14px,12px) scale(.94)}}
+.toast-box{position:relative;width:100%;max-width:340px;background:linear-gradient(180deg,rgba(22,31,20,.9),rgba(16,22,15,.92));border:1px solid var(--border);border-top:2px solid var(--green);border-radius:16px;padding:26px 22px 22px;text-align:center;box-shadow:0 0 0 1px rgba(57,255,106,.06),0 20px 60px rgba(0,0,0,.55),0 0 40px rgba(57,255,106,.08);transform:scale(.92) translateY(10px);opacity:0;transition:transform .32s cubic-bezier(.2,.9,.25,1.15),opacity .28s ease}
+#toast-overlay.show .toast-box,#confirm-overlay.show .toast-box{transform:scale(1) translateY(0);opacity:1}
+.toast-icon{width:46px;height:46px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(57,255,106,.08);border:1px solid var(--green-dim);box-shadow:0 0 18px var(--green-glow);color:var(--green)}
+.toast-icon svg{width:22px;height:22px}
+.toast-icon.is-error{border-color:rgba(255,107,107,.5);background:rgba(255,107,107,.08);box-shadow:0 0 18px rgba(255,107,107,.25);color:var(--danger)}
+.toast-title{font-family:"Teko",sans-serif;font-size:1.5rem;letter-spacing:.04em;color:var(--text);margin-bottom:6px}
+.toast-msg{font-family:"Share Tech Mono",monospace;font-size:.82rem;line-height:1.5;color:var(--text-dim)}
+.toast-ok{margin-top:20px;width:100%;padding:12px;border-radius:9px;background:var(--green);border:1px solid var(--green);color:#04120a;font-family:"Teko",sans-serif;font-size:1.1rem;letter-spacing:.05em;font-weight:600}
+.toast-ok:hover{box-shadow:0 0 16px var(--green-glow)}
+.toast-actions{display:flex;gap:10px;margin-top:20px}
+.toast-actions button{flex:1;padding:12px;border-radius:9px;font-family:"Teko",sans-serif;font-size:1.1rem;letter-spacing:.05em}
+#confirm-cancel{background:transparent;border:1px solid var(--border);color:var(--text-dim)}
+#confirm-cancel:hover{color:var(--text);border-color:var(--text-dim)}
+#confirm-delete{background:var(--danger);border:1px solid var(--danger);color:#1a0505;font-weight:600}
+#confirm-delete:hover{box-shadow:0 0 16px rgba(255,107,107,.35)}
+#confirm-overlay .toast-liquid span{background:radial-gradient(circle at 30% 30%,rgba(255,107,107,.28),transparent 70%)}
+#confirm-overlay .toast-liquid span:nth-child(2){background:radial-gradient(circle at 60% 40%,rgba(255,107,107,.18),transparent 70%)}
+#confirm-overlay .toast-liquid span:nth-child(3){background:radial-gradient(circle at 40% 60%,rgba(255,107,107,.14),transparent 70%)}
+#confirm-overlay .toast-box{border-top:2px solid var(--danger)}
+@media (prefers-reduced-motion:reduce){.toast-liquid span{animation:none!important}.toast-box{transition:opacity .15s ease!important;transform:none!important}}
+/* ===== streak calendar ===== */
+.cal-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.cal-stat{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.cal-stat .tc-label{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin-bottom:4px}
+.cal-stat .cal-num{font-family:"Teko",sans-serif;font-size:2.2rem;line-height:1;color:var(--green);text-shadow:0 0 12px var(--green-glow)}
+.cal-stat .cal-unit{font-size:.7rem;color:var(--text-dim);margin-left:4px}
+.cal-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-title{font-family:"Teko",sans-serif;font-size:1.5rem;letter-spacing:.05em}
+.cal-nav{width:34px;height:34px;border-radius:8px;background:none;border:1px solid var(--border);color:var(--text)}
+.cal-nav:hover{border-color:var(--green);color:var(--green)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-dow{text-align:center;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);padding-bottom:4px}
+.cal-day{aspect-ratio:1;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-family:"Share Tech Mono",monospace;font-size:.85rem;display:flex;align-items:center;justify-content:center;padding:0}
+.cal-day.empty{background:none;border:none;pointer-events:none}
+.cal-day.future{opacity:.35;pointer-events:none}
+.cal-day.today{border-color:var(--green);box-shadow:0 0 0 1px var(--green) inset}
+.cal-day.checked{background:var(--green);color:#04120a;font-weight:700;box-shadow:0 0 12px var(--green-glow)}
+.cal-day.checked::after{content:"\2713";font-size:.6rem;margin-left:2px}
+.cal-clock{margin-top:14px;text-align:center;font-family:"Share Tech Mono",monospace;font-size:.8rem;color:var(--text-dim)}
+.cal-clock b{color:var(--green);font-weight:400}
+/* streak panel placement: right side on wide screens, under the menu on small ones */
+#streak-panel{display:none}
+body.on-menu #streak-panel{display:block;max-width:480px;margin:0 auto;padding:0 20px 60px}
+/* every screen except splash: content + streak panel as one centered pair; calendar always vertically centered */
+@media (min-width:900px){
+body.in-app .screen.active{margin:0 auto;position:relative;left:-180px}
+body.in-app #menu.active{min-height:100vh;justify-content:center}
+body.in-app #streak-panel{display:block;position:fixed;top:50%;left:calc(50% + 100px);transform:translateY(-50%);width:320px;max-width:none;margin:0;padding:0;max-height:calc(100vh - 32px);overflow-y:auto;z-index:5}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="scanlines" aria-hidden="true"></div>
+
+<section id="splash" class="screen active">
+<div class="pulse-box">
+<svg class="pulse-svg" viewBox="0 0 300 80" preserveAspectRatio="xMidYMid meet">
+<path id="pulse-path" d="M0,40 L55,40 L70,12 L85,68 L100,40 L140,40 L150,28 L160,52 L170,40 L300,40" />
+</svg>
+</div>
+<h1 class="wordmark">IRON<span>LOG</span></h1>
+<p class="tap-hint">Tap to begin</p>
+</section>
+
+<section id="menu" class="screen">
+<h1 class="wordmark">IRON<span>LOG</span></h1>
+<div class="menu-grid">
+<button class="menu-card" data-target="profile">
+<span class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7" /></svg></span>
+<span class="menu-text"><span class="menu-label">PROFILE</span><span class="menu-sub">Stats &amp; daily targets</span></span>
+</button>
+<button class="menu-card" data-target="gym">
+<span class="menu-icon"><svg viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="10" y1="12" x2="38" y2="12" /><rect x="4" y="4" width="6" height="16" rx="1" /><rect x="38" y="4" width="6" height="16" rx="1" /><rect x="0" y="7" width="4" height="10" rx="1" /><rect x="44" y="7" width="4" height="10" rx="1" /></svg></span>
+<span class="menu-text"><span class="menu-label">GYM</span><span class="menu-sub">6-day training log</span></span>
+</button>
+<button class="menu-card" data-target="diet">
+<span class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v6a2 2 0 002 2 2 2 0 002-2V3M9 11v10M15 3c-1.5 0-2 2-2 4s.5 4 2 4v9" /></svg></span>
+<span class="menu-text"><span class="menu-label">DIET</span><span class="menu-sub">7-day meal log</span></span>
+</button>
+</div>
+<div class="data-actions">
+<button type="button" id="export-btn" class="data-btn">Export backup (.json)</button>
+<button type="button" id="import-btn" class="data-btn">Import backup (.json)</button>
+<input type="file" id="import-input" accept="application/json,.json" class="hide" />
+</div>
+<p id="storage-note" class="storage-note hide">Auto-save isn't available in this browser (storage is blocked). Use Export to save a backup file, and Import to load it back in.</p>
+</section>
+
+<section id="profile-view" class="screen">
+<header class="view-header">
+<button class="back-btn" aria-label="Back to menu">&larr;</button>
+<h2>PROFILE</h2>
+</header>
+<form class="profile-form" id="profile-form">
+<div class="pf-group">
+<label class="pf-label" for="pf-name">Name</label>
+<input class="pf-input" id="pf-name" type="text" placeholder="Your name" />
+</div>
+<div class="pf-row">
+<div class="pf-group">
+<label class="pf-label" for="pf-age">Age</label>
+<div class="num-stepper">
+<button type="button" class="step-btn step-minus" aria-label="Decrease age"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+<input class="pf-input" id="pf-age" type="number" step="1" min="10" max="100" placeholder="yrs" />
+<button type="button" class="step-btn step-plus" aria-label="Increase age"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+</div>
+</div>
+<div class="pf-group">
+<label class="pf-label" for="pf-gender">Gender</label>
+<select class="pf-select" id="pf-gender">
+<option value="male">Male</option>
+<option value="female">Female</option>
+<option value="other">Other</option>
+</select>
+</div>
+</div>
+<div class="pf-row">
+<div class="pf-group">
+<label class="pf-label" for="pf-weight">Weight (kg)</label>
+<div class="num-stepper">
+<button type="button" class="step-btn step-minus" aria-label="Decrease weight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+<input class="pf-input" id="pf-weight" type="number" step="0.1" min="0" placeholder="kg" />
+<button type="button" class="step-btn step-plus" aria-label="Increase weight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+</div>
+</div>
+<div class="pf-group">
+<label class="pf-label" for="pf-height">Height (cm)</label>
+<div class="num-stepper">
+<button type="button" class="step-btn step-minus" aria-label="Decrease height"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+<input class="pf-input" id="pf-height" type="number" step="0.1" min="0" placeholder="cm" />
+<button type="button" class="step-btn step-plus" aria-label="Increase height"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+</div>
+</div>
+</div>
+<div class="pf-group">
+<label class="pf-label" for="pf-activity">Activity level</label>
+<select class="pf-select" id="pf-activity">
+<option value="sedentary">Sedentary — little or no exercise</option>
+<option value="light">Light — exercise 1-3 days/week</option>
+<option value="moderate">Moderate — exercise 3-5 days/week</option>
+<option value="active">Active — exercise 6-7 days/week</option>
+<option value="very_active">Very active — hard training / physical job</option>
+</select>
+</div>
+<button type="submit" class="profile-save-btn">Save &amp; Calculate</button>
+</form>
+
+<div id="targets-panel" class="targets-panel hide">
+<h3 class="targets-title">Daily Targets</h3>
+<p class="targets-sub">Estimated from your stats and activity level.</p>
+<div class="targets-grid">
+<div class="target-chip wide"><span class="tc-label">Calories</span><span class="tc-value" id="tc-calories">—</span></div>
+<div class="target-chip"><span class="tc-label">Protein</span><span class="tc-value" id="tc-protein">—</span></div>
+<div class="target-chip"><span class="tc-label">Carbs</span><span class="tc-value" id="tc-carbs">—</span></div>
+<div class="target-chip"><span class="tc-label">Fat</span><span class="tc-value" id="tc-fat">—</span></div>
+<div class="target-chip"><span class="tc-label">Fiber</span><span class="tc-value" id="tc-fiber">—</span></div>
+</div>
+<p class="targets-formula-note">Calories via Mifflin-St Jeor BMR &times; activity multiplier (TDEE). Protein ~1.6g/kg bodyweight, fat ~25% of calories, carbs fill the remainder, fiber ~14g per 1000 kcal. General estimates, not medical advice.</p>
+</div>
+
+<p id="wt-empty" class="empty-state hide">Save your weight a couple of times to start seeing your trend here.</p>
+
+<div id="weight-chart-panel" class="chart-panel hide">
+<h3 class="targets-title">Weight Trend</h3>
+<p class="targets-sub" id="wt-trend-note">—</p>
+<div class="weight-chart-wrap" id="weight-chart-svg-wrap"></div>
+<div class="weight-chart-meta"><span id="wt-first-label"></span><span id="wt-last-label"></span></div>
+<button type="button" id="wt-reset-btn" class="wt-reset-btn">Reset weight log</button>
+</div>
+</section>
+
+<section id="gym-view" class="screen">
+<header class="view-header">
+<button class="back-btn" aria-label="Back to menu">&larr;</button>
+<h2>GYM LOG</h2>
+</header>
+<div class="day-tabs" id="gym-day-tabs"></div>
+<div class="day-content" id="gym-day-content"></div>
+</section>
+
+<section id="diet-view" class="screen">
+<header class="view-header">
+<button class="back-btn" aria-label="Back to menu">&larr;</button>
+<h2>DIET LOG</h2>
+</header>
+<div class="day-tabs" id="diet-day-tabs"></div>
+<div class="day-content" id="diet-day-content"></div>
+</section>
+
+<aside id="streak-panel" aria-label="Streak calendar">
+<div class="cal-stats">
+<div class="cal-stat"><span class="tc-label">Current streak</span><span class="cal-num" id="cal-current">0</span><span class="cal-unit">days</span></div>
+<div class="cal-stat"><span class="tc-label">Highest streak</span><span class="cal-num" id="cal-best">0</span><span class="cal-unit">days</span></div>
+</div>
+<div class="cal-panel">
+<div class="cal-head">
+<button class="cal-nav" id="cal-prev" aria-label="Previous month">&lsaquo;</button>
+<span class="cal-title" id="cal-title"></span>
+<button class="cal-nav" id="cal-next" aria-label="Next month">&rsaquo;</button>
+</div>
+<div class="cal-grid" id="cal-grid"></div>
+</div>
+<p class="cal-clock" id="cal-clock"></p>
+</aside>
+
+<div id="modal-overlay" class="hidden">
+<div class="modal">
+<h3 id="modal-title">Add Exercise</h3>
+<form id="modal-form">
+<label for="f-name">Name</label>
+<input id="f-name" type="text" required />
+
+<label id="f-weight-label" for="f-weight">Weight (kg)</label>
+<div class="num-stepper">
+<button type="button" class="step-btn step-minus" aria-label="Decrease weight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+<input id="f-weight" type="number" step="0.1" min="0" />
+<button type="button" class="step-btn step-plus" aria-label="Increase weight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+</div>
+
+<label class="field-gym" for="f-reps">Reps</label>
+<div class="num-stepper field-gym">
+<button type="button" class="step-btn step-minus" aria-label="Decrease reps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+<input id="f-reps" type="number" step="1" min="0" />
+<button type="button" class="step-btn step-plus" aria-label="Increase reps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+</div>
+
+<label class="field-diet" for="f-calories">Calories (kcal)</label>
+<div class="num-stepper field-diet">
+<button type="button" class="step-btn step-minus" aria-label="Decrease calories"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+<input id="f-calories" type="number" step="1" min="0" />
+<button type="button" class="step-btn step-plus" aria-label="Increase calories"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+</div>
+
+<label class="field-diet" for="f-protein">Protein (g)</label>
+<div class="num-stepper field-diet">
+<button type="button" class="step-btn step-minus" aria-label="Decrease protein"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+<input id="f-protein" type="number" step="1" min="0" />
+<button type="button" class="step-btn step-plus" aria-label="Increase protein"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+</div>
+
+<label class="field-diet" for="f-carbs">Carbs (g)</label>
+<div class="num-stepper field-diet">
+<button type="button" class="step-btn step-minus" aria-label="Decrease carbs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+<input id="f-carbs" type="number" step="1" min="0" />
+<button type="button" class="step-btn step-plus" aria-label="Increase carbs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+</div>
+
+<label class="field-diet" for="f-fat">Fat (g)</label>
+<div class="num-stepper field-diet">
+<button type="button" class="step-btn step-minus" aria-label="Decrease fat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+<input id="f-fat" type="number" step="1" min="0" />
+<button type="button" class="step-btn step-plus" aria-label="Increase fat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+</div>
+
+<div class="modal-actions">
+<button type="button" id="modal-cancel">Cancel</button>
+<button type="submit" id="modal-save">Save</button>
+</div>
+</form>
+</div>
+</div>
+
+<div id="toast-overlay">
+<div class="toast-liquid" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="toast-box" role="alertdialog" aria-modal="true" aria-labelledby="toast-title" aria-describedby="toast-msg">
+<div id="toast-icon" class="toast-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5" /></svg></div>
+<h3 id="toast-title" class="toast-title">Backup Loaded</h3>
+<p id="toast-msg" class="toast-msg">Your data has been restored.</p>
+<button type="button" id="toast-ok" class="toast-ok">OK</button>
+</div>
+</div>
+
+<div id="confirm-overlay">
+<div class="toast-liquid" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="toast-box" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-msg">
+<div class="toast-icon is-error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18" /><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" /></svg></div>
+<h3 id="confirm-title" class="toast-title">Delete Item</h3>
+<p id="confirm-msg" class="toast-msg">Are you sure?</p>
+<div class="toast-actions">
+<button type="button" id="confirm-cancel">Cancel</button>
+<button type="button" id="confirm-delete">Delete</button>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+const ICONS = {
+  pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>',
+};
+const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+const WARN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+
+const GYM_DAYS = 6;
+const DIET_DAYS = 7;
+const STORAGE_KEY = "ironlog_data_v1";
+const ACTIVITY_MULTIPLIERS = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, very_active: 1.9 };
+const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+let state = null;
+let ui = { gymDay: 1, dietDay: 1 };
+let modalCtx = null;
+let storageBackend = "none"; // 'cloud' | 'local' | 'none'
+const LOCAL_KEY = "ironlog_data_v1";
+
+function defaultProfile() {
+  return { name: "", age: "", gender: "male", weight: "", height: "", activity: "moderate", weightLog: [] };
+}
+
+function defaultState() {
+  const gym = {};
+  for (let i = 1; i <= GYM_DAYS; i++) gym["day" + i] = { label: WEEKDAY_LABELS[i - 1] || "Day " + i, items: [] };
+  const diet = {};
+  for (let i = 1; i <= DIET_DAYS; i++) diet["day" + i] = { label: WEEKDAY_LABELS[i - 1] || "Day " + i, items: [] };
+  return { gym, diet, profile: defaultProfile(), checkins: {} };
+}
+
+function genId() {
+  return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+}
+
+function fillMissingDays(parsed) {
+  const def = defaultState();
+  const merged = { gym: (parsed && parsed.gym) || def.gym, diet: (parsed && parsed.diet) || def.diet };
+  for (const k in def.gym) if (!merged.gym[k]) merged.gym[k] = def.gym[k];
+  for (const k in def.diet) if (!merged.diet[k]) merged.diet[k] = def.diet[k];
+  merged.profile = Object.assign(defaultProfile(), (parsed && parsed.profile) || {});
+  merged.checkins = (parsed && parsed.checkins) || {};
+  return merged;
+}
+
+function cloudStorageSupported() {
+  return typeof window !== "undefined" && !!window.storage && typeof window.storage.get === "function" && typeof window.storage.set === "function";
+}
+
+function localStorageSupported() {
+  try {
+    const testKey = "__ironlog_test__";
+    window.localStorage.setItem(testKey, "1");
+    window.localStorage.removeItem(testKey);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function loadState() {
+  if (cloudStorageSupported()) {
+    storageBackend = "cloud";
+    try {
+      const res = await window.storage.get(STORAGE_KEY, false);
+      state = res && res.value ? fillMissingDays(JSON.parse(res.value)) : defaultState();
+    } catch (e) {
+      // A missing key throws rather than returning null - normal on first run, not a failure.
+      state = defaultState();
+    }
+    return;
+  }
+  if (localStorageSupported()) {
+    storageBackend = "local";
+    try {
+      const raw = window.localStorage.getItem(LOCAL_KEY);
+      state = raw ? fillMissingDays(JSON.parse(raw)) : defaultState();
+    } catch (e) {
+      state = defaultState();
+    }
+    return;
+  }
+  storageBackend = "none";
+  state = defaultState();
+}
+
+async function saveState() {
+  if (storageBackend === "cloud") {
+    try {
+      await window.storage.set(STORAGE_KEY, JSON.stringify(state), false);
+    } catch (e) {
+      console.error("Cloud auto-save failed, falling back", e);
+      storageBackend = localStorageSupported() ? "local" : "none";
+    }
+  }
+  if (storageBackend === "local") {
+    try {
+      window.localStorage.setItem(LOCAL_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error("Local auto-save failed", e);
+      storageBackend = "none";
+    }
+  }
+  updateStorageNote();
+}
+
+function updateStorageNote() {
+  const note = document.getElementById("storage-note");
+  if (!note) return;
+  note.classList.toggle("hide", storageBackend !== "none");
+}
+
+function exportData() {
+  const dataStr = JSON.stringify(state, null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = "ironlog-backup-" + date + ".json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = async (evt) => {
+    try {
+      const parsed = JSON.parse(evt.target.result);
+      if (!parsed || typeof parsed !== "object" || (!parsed.gym && !parsed.diet)) {
+        throw new Error("Not an IRONLOG backup file");
+      }
+      state = fillMissingDays(parsed);
+      ui.gymDay = 1;
+      ui.dietDay = 1;
+      await saveState();
+      if (document.getElementById("gym-view").classList.contains("active")) {
+        renderGymTabs();
+        renderGymDay(ui.gymDay);
+      }
+      if (document.getElementById("diet-view").classList.contains("active")) {
+        renderDietTabs();
+        renderDietDay(ui.dietDay);
+      }
+      if (document.getElementById("profile-view").classList.contains("active")) {
+        renderProfile();
+      }
+      renderCalendar();
+      showToast({ title: "Backup Loaded", message: "Your data has been restored successfully." });
+    } catch (err) {
+      showToast({
+        title: "Import Failed",
+        message: "Could not read that file \u2014 make sure it\u2019s a valid IRONLOG backup (.json).",
+        isError: true,
+      });
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ===== themed toast popup (replaces alert()) ===== */
+let toastCloseHandler = null;
+
+function showToast({ title, message, isError = false }) {
+  const overlay = document.getElementById("toast-overlay");
+  const icon = document.getElementById("toast-icon");
+  const titleEl = document.getElementById("toast-title");
+  const msgEl = document.getElementById("toast-msg");
+  const okBtn = document.getElementById("toast-ok");
+
+  titleEl.textContent = title;
+  msgEl.textContent = message;
+  icon.innerHTML = isError ? WARN_ICON : CHECK_ICON;
+  icon.classList.toggle("is-error", isError);
+
+  overlay.classList.add("show");
+
+  if (toastCloseHandler) {
+    okBtn.removeEventListener("click", toastCloseHandler);
+    overlay.removeEventListener("click", toastCloseHandler);
+    document.removeEventListener("keydown", toastCloseHandler);
+  }
+  toastCloseHandler = (e) => {
+    if (e.type === "click" && e.target !== okBtn && e.target !== overlay) return;
+    if (e.type === "keydown" && e.key !== "Escape" && e.key !== "Enter") return;
+    hideToast();
+  };
+  okBtn.addEventListener("click", toastCloseHandler);
+  overlay.addEventListener("click", toastCloseHandler);
+  document.addEventListener("keydown", toastCloseHandler);
+  okBtn.focus();
+}
+
+function hideToast() {
+  document.getElementById("toast-overlay").classList.remove("show");
+}
+
+/* ===== themed confirm dialog (replaces confirm()) ===== */
+let confirmCleanup = null;
+
+function showConfirm({ title, message, confirmLabel = "Delete", onConfirm }) {
+  const overlay = document.getElementById("confirm-overlay");
+  const titleEl = document.getElementById("confirm-title");
+  const msgEl = document.getElementById("confirm-msg");
+  const cancelBtn = document.getElementById("confirm-cancel");
+  const deleteBtn = document.getElementById("confirm-delete");
+
+  titleEl.textContent = title;
+  msgEl.textContent = message;
+  deleteBtn.textContent = confirmLabel;
+
+  overlay.classList.add("show");
+
+  if (confirmCleanup) confirmCleanup();
+
+  const onCancel = () => close();
+  const onDelete = () => {
+    close();
+    onConfirm && onConfirm();
+  };
+  const onOverlayClick = (e) => {
+    if (e.target === overlay) close();
+  };
+  const onKeydown = (e) => {
+    if (e.key === "Escape") close();
+    if (e.key === "Enter") onDelete();
+  };
+
+  function close() {
+    overlay.classList.remove("show");
+    cancelBtn.removeEventListener("click", onCancel);
+    deleteBtn.removeEventListener("click", onDelete);
+    overlay.removeEventListener("click", onOverlayClick);
+    document.removeEventListener("keydown", onKeydown);
+    confirmCleanup = null;
+  }
+
+  cancelBtn.addEventListener("click", onCancel);
+  deleteBtn.addEventListener("click", onDelete);
+  overlay.addEventListener("click", onOverlayClick);
+  document.addEventListener("keydown", onKeydown);
+  confirmCleanup = close;
+  cancelBtn.focus();
+}
+
+function initDataActions() {
+  document.getElementById("export-btn").addEventListener("click", exportData);
+  const importInput = document.getElementById("import-input");
+  document.getElementById("import-btn").addEventListener("click", () => importInput.click());
+  importInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) importData(file);
+    e.target.value = "";
+  });
+}
+
+/* ===== themed number stepper (replaces native spin arrows) ===== */
+function stepDecimals(step) {
+  const s = String(step);
+  const dot = s.indexOf(".");
+  return dot === -1 ? 0 : s.length - dot - 1;
+}
+
+function initNumberSteppers() {
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".step-btn");
+    if (!btn) return;
+    const wrapper = btn.closest(".num-stepper");
+    const input = wrapper && wrapper.querySelector('input[type="number"]');
+    if (!input) return;
+
+    const step = parseFloat(input.step) || 1;
+    const min = input.min !== "" ? parseFloat(input.min) : -Infinity;
+    const max = input.max !== "" ? parseFloat(input.max) : Infinity;
+    let current = parseFloat(input.value);
+    if (isNaN(current)) current = min !== -Infinity ? min : 0;
+
+    let next = btn.classList.contains("step-plus") ? current + step : current - step;
+    next = Math.min(max, Math.max(min, next));
+
+    const decimals = stepDecimals(step);
+    input.value = decimals > 0 ? next.toFixed(decimals) : String(Math.round(next));
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+}
+
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.body.classList.toggle("in-app", id !== "splash");
+  document.body.classList.toggle("on-menu", id === "menu");
+}
+
+function initSplash(readyPromise) {
+  const splash = document.getElementById("splash");
+  let advanced = false;
+  async function advance() {
+    if (advanced) return;
+    advanced = true;
+    await readyPromise;
+    splash.classList.add("fade-out");
+    setTimeout(() => {
+      showScreen("menu");
+    }, 380);
+  }
+  splash.addEventListener("click", advance);
+  setTimeout(advance, 2800);
+}
+
+function initNav() {
+  document.querySelectorAll(".menu-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      const target = card.dataset.target;
+      if (target === "profile") {
+        showScreen("profile-view");
+        renderProfile();
+      } else if (target === "gym") {
+        showScreen("gym-view");
+        renderGymTabs();
+        renderGymDay(ui.gymDay);
+      } else {
+        showScreen("diet-view");
+        renderDietTabs();
+        renderDietDay(ui.dietDay);
+      }
+    });
+  });
+  document.querySelectorAll(".back-btn").forEach((btn) => {
+    btn.addEventListener("click", () => showScreen("menu"));
+  });
+  initProfileForm();
+}
+
+function renderGymTabs() {
+  const wrap = document.getElementById("gym-day-tabs");
+  wrap.innerHTML = "";
+  for (let i = 1; i <= GYM_DAYS; i++) {
+    const b = document.createElement("button");
+    b.className = "day-tab" + (i === ui.gymDay ? " active" : "");
+    b.textContent = WEEKDAY_LABELS[i - 1] || "Day " + i;
+    b.addEventListener("click", () => {
+      ui.gymDay = i;
+      renderGymTabs();
+      renderGymDay(i);
+    });
+    wrap.appendChild(b);
+  }
+}
+
+function renderDietTabs() {
+  const wrap = document.getElementById("diet-day-tabs");
+  wrap.innerHTML = "";
+  for (let i = 1; i <= DIET_DAYS; i++) {
+    const b = document.createElement("button");
+    b.className = "day-tab" + (i === ui.dietDay ? " active" : "");
+    b.textContent = WEEKDAY_LABELS[i - 1] || "Day " + i;
+    b.addEventListener("click", () => {
+      ui.dietDay = i;
+      renderDietTabs();
+      renderDietDay(i);
+    });
+    wrap.appendChild(b);
+  }
+}
+
+function makeLabelRow(dayData, day, onChange) {
+  const row = document.createElement("div");
+  row.className = "day-label-row";
+  const hint = document.createElement("span");
+  hint.className = "field-hint";
+  hint.textContent = "Day name";
+  const input = document.createElement("input");
+  input.className = "day-label-input";
+  input.value = dayData.label;
+  input.setAttribute("aria-label", "Day name");
+  input.addEventListener("change", () => {
+    dayData.label = input.value.trim() || "Day " + day;
+    input.value = dayData.label;
+    saveState();
+    onChange && onChange();
+  });
+  row.appendChild(hint);
+  row.appendChild(input);
+  return row;
+}
+
+function renderGymDay(day) {
+  const dayData = state.gym["day" + day];
+  const content = document.getElementById("gym-day-content");
+  content.innerHTML = "";
+  content.appendChild(makeLabelRow(dayData, day));
+
+  const list = document.createElement("div");
+  list.className = "item-list";
+  if (dayData.items.length === 0) {
+    const p = document.createElement("p");
+    p.className = "empty-state";
+    p.textContent = "No exercises logged yet. Add your first lift.";
+    list.appendChild(p);
+  } else {
+    dayData.items.forEach((item) => {
+      const card = document.createElement("div");
+      card.className = "item-card";
+      card.innerHTML =
+        '<div class="item-main"><span class="item-name"></span><span class="item-stats"></span></div>' +
+        '<div class="item-actions">' +
+        '<button class="icon-btn edit-btn" aria-label="Edit exercise">' + ICONS.pencil + "</button>" +
+        '<button class="icon-btn danger del-btn" aria-label="Delete exercise">' + ICONS.trash + "</button>" +
+        "</div>";
+      card.querySelector(".item-name").textContent = item.name;
+      card.querySelector(".item-stats").textContent = item.weight + " kg \u00D7 " + item.reps + " reps";
+      card.querySelector(".edit-btn").addEventListener("click", () => openModal("gym", dayData, item));
+      card.querySelector(".del-btn").addEventListener("click", () => {
+        showConfirm({
+          title: "Delete Exercise",
+          message: 'Remove "' + item.name + '" from this day\u2019s log?',
+          onConfirm: () => {
+            dayData.items = dayData.items.filter((it) => it.id !== item.id);
+            saveState();
+            renderGymDay(day);
+            showToast({ title: "Exercise Deleted", message: '"' + item.name + '" has been removed.' });
+          },
+        });
+      });
+      list.appendChild(card);
+    });
+  }
+  content.appendChild(list);
+
+  const addBtn = document.createElement("button");
+  addBtn.className = "add-btn";
+  addBtn.textContent = "+ Add Exercise";
+  addBtn.addEventListener("click", () => openModal("gym", dayData, null));
+  content.appendChild(addBtn);
+}
+
+function renderDietDay(day) {
+  const dayData = state.diet["day" + day];
+  const content = document.getElementById("diet-day-content");
+  content.innerHTML = "";
+  content.appendChild(makeLabelRow(dayData, day));
+
+  const list = document.createElement("div");
+  list.className = "item-list";
+  if (dayData.items.length === 0) {
+    const p = document.createElement("p");
+    p.className = "empty-state";
+    p.textContent = "No meals logged yet. Add your first meal.";
+    list.appendChild(p);
+  } else {
+    dayData.items.forEach((item) => {
+      const card = document.createElement("div");
+      card.className = "item-card";
+      card.innerHTML =
+        '<div class="item-main"><span class="item-name"></span><span class="item-stats"></span></div>' +
+        '<div class="item-actions">' +
+        '<button class="icon-btn edit-btn" aria-label="Edit meal">' + ICONS.pencil + "</button>" +
+        '<button class="icon-btn danger del-btn" aria-label="Delete meal">' + ICONS.trash + "</button>" +
+        "</div>";
+      card.querySelector(".item-name").textContent = item.name;
+      card.querySelector(".item-stats").textContent =
+        item.weight + "g \u00B7 " + item.calories + " kcal \u00B7 P" + item.protein + " C" + item.carbs + " F" + item.fat;
+      card.querySelector(".edit-btn").addEventListener("click", () => openModal("diet", dayData, item));
+      card.querySelector(".del-btn").addEventListener("click", () => {
+        showConfirm({
+          title: "Delete Meal",
+          message: 'Remove "' + item.name + '" from this day\u2019s log?',
+          onConfirm: () => {
+            dayData.items = dayData.items.filter((it) => it.id !== item.id);
+            saveState();
+            renderDietDay(day);
+            showToast({ title: "Meal Deleted", message: '"' + item.name + '" has been removed.' });
+          },
+        });
+      });
+      list.appendChild(card);
+    });
+  }
+  content.appendChild(list);
+
+  const totals = dayData.items.reduce(
+    (acc, it) => {
+      acc.calories += Number(it.calories) || 0;
+      acc.protein += Number(it.protein) || 0;
+      acc.carbs += Number(it.carbs) || 0;
+      acc.fat += Number(it.fat) || 0;
+      return acc;
+    },
+    { calories: 0, protein: 0, carbs: 0, fat: 0 },
+  );
+
+  const totalsBar = document.createElement("div");
+  totalsBar.className = "totals-bar";
+  totalsBar.innerHTML =
+    '<div><span class="t-label">Calories</span><span class="t-value">' + totals.calories + "</span></div>" +
+    '<div><span class="t-label">Protein</span><span class="t-value">' + totals.protein + "g</span></div>" +
+    '<div><span class="t-label">Carbs</span><span class="t-value">' + totals.carbs + "g</span></div>" +
+    '<div><span class="t-label">Fat</span><span class="t-value">' + totals.fat + "g</span></div>";
+  content.appendChild(totalsBar);
+
+  const addBtn = document.createElement("button");
+  addBtn.className = "add-btn";
+  addBtn.textContent = "+ Add Meal";
+  addBtn.addEventListener("click", () => openModal("diet", dayData, null));
+  content.appendChild(addBtn);
+}
+
+/* ===== profile & daily targets ===== */
+function computeTargets(p) {
+  const w = Number(p.weight), h = Number(p.height), a = Number(p.age);
+  if (!w || !h || !a || w <= 0 || h <= 0 || a <= 0) return null;
+
+  let bmr;
+  if (p.gender === "male") bmr = 10 * w + 6.25 * h - 5 * a + 5;
+  else if (p.gender === "female") bmr = 10 * w + 6.25 * h - 5 * a - 161;
+  else bmr = 10 * w + 6.25 * h - 5 * a - 78; // midpoint offset for 'other'
+
+  const mult = ACTIVITY_MULTIPLIERS[p.activity] || ACTIVITY_MULTIPLIERS.moderate;
+  const tdee = bmr * mult;
+  const calories = Math.round(tdee);
+
+  const protein = Math.round(w * 1.6);
+  const fat = Math.round((calories * 0.25) / 9);
+  const proteinKcal = protein * 4;
+  const fatKcal = fat * 9;
+  const carbKcal = Math.max(calories - proteinKcal - fatKcal, 0);
+  const carbs = Math.round(carbKcal / 4);
+  const fiber = Math.round((calories / 1000) * 14);
+
+  return { calories, protein, carbs, fat, fiber, bmr: Math.round(bmr), tdee: Math.round(tdee) };
+}
+
+function renderProfile() {
+  const p = state.profile;
+  document.getElementById("pf-name").value = p.name || "";
+  document.getElementById("pf-age").value = p.age || "";
+  document.getElementById("pf-gender").value = p.gender || "male";
+  document.getElementById("pf-weight").value = p.weight || "";
+  document.getElementById("pf-height").value = p.height || "";
+  document.getElementById("pf-activity").value = p.activity || "moderate";
+  renderTargets();
+  renderWeightChart();
+}
+
+function renderTargets() {
+  const panel = document.getElementById("targets-panel");
+  const targets = computeTargets(state.profile);
+  if (!targets) {
+    panel.classList.add("hide");
+    return;
+  }
+  document.getElementById("tc-calories").textContent = targets.calories + " kcal";
+  document.getElementById("tc-protein").textContent = targets.protein + " g";
+  document.getElementById("tc-carbs").textContent = targets.carbs + " g";
+  document.getElementById("tc-fat").textContent = targets.fat + " g";
+  document.getElementById("tc-fiber").textContent = targets.fiber + " g";
+  panel.classList.remove("hide");
+}
+
+function logTodayWeight(weightVal) {
+  const w = Number(weightVal);
+  if (!w || w <= 0) return;
+  if (!Array.isArray(state.profile.weightLog)) state.profile.weightLog = [];
+  const today = new Date().toISOString().slice(0, 10);
+  const log = state.profile.weightLog;
+  const existing = log.find((e) => e.date === today);
+  if (existing) existing.weight = w;
+  else log.push({ date: today, weight: w });
+  log.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function getWeightLog() {
+  return ((state.profile && state.profile.weightLog) || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function formatShortDate(iso) {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+// Converts a point list into smooth cubic-bezier path segments (Catmull-Rom).
+function catmullRomToBezier(points) {
+  let d = "";
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i - 1] || points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2] || p2;
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    d += "C" + cp1x + "," + cp1y + " " + cp2x + "," + cp2y + " " + p2.x + "," + p2.y + " ";
+  }
+  return d;
+}
+
+function renderWeightChart() {
+  const panel = document.getElementById("weight-chart-panel");
+  const empty = document.getElementById("wt-empty");
+  const wrap = document.getElementById("weight-chart-svg-wrap");
+  const log = getWeightLog();
+
+  if (log.length === 0) {
+    panel.classList.add("hide");
+    empty.classList.remove("hide");
+    return;
+  }
+  empty.classList.add("hide");
+  panel.classList.remove("hide");
+
+  const W = 340, H = 150, padX = 18, padY = 24;
+  let minW = Math.min(...log.map((e) => e.weight));
+  let maxW = Math.max(...log.map((e) => e.weight));
+  if (minW === maxW) {
+    minW -= 1;
+    maxW += 1;
+  }
+  const range = maxW - minW;
+  minW -= range * 0.15;
+  maxW += range * 0.15;
+
+  const points = log.map((e, i) => {
+    const x = log.length === 1 ? W / 2 : padX + (i / (log.length - 1)) * (W - padX * 2);
+    const y = padY + (1 - (e.weight - minW) / (maxW - minW)) * (H - padY * 2);
+    return { x, y, date: e.date, weight: e.weight };
+  });
+
+  const last = points[points.length - 1];
+  let pathD = "", areaD = "";
+  if (points.length > 1) {
+    pathD = "M" + points[0].x + "," + points[0].y + " " + catmullRomToBezier(points);
+    areaD = pathD + " L" + last.x + "," + (H - padY) + " L" + points[0].x + "," + (H - padY) + " Z";
+  }
+
+  let svg = '<svg viewBox="0 0 ' + W + " " + H + '" class="wc-svg" preserveAspectRatio="none">';
+  svg +=
+    '<defs><linearGradient id="wcFade" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0%" stop-color="var(--green)" stop-opacity="0.28"/>' +
+    '<stop offset="100%" stop-color="var(--green)" stop-opacity="0"/>' +
+    "</linearGradient></defs>";
+  if (areaD) svg += '<path d="' + areaD + '" fill="url(#wcFade)" stroke="none"/>';
+  if (pathD) svg += '<path d="' + pathD + '" class="wc-line"/>';
+  svg += '<circle cx="' + last.x + '" cy="' + last.y + '" r="6" class="wc-ping"/>';
+  svg += '<circle cx="' + last.x + '" cy="' + last.y + '" r="4.5" class="wc-dot"/>';
+  svg += "</svg>";
+  wrap.innerHTML = svg;
+
+  document.getElementById("wt-first-label").textContent = formatShortDate(log[0].date) + " \u00B7 " + log[0].weight + " kg";
+  document.getElementById("wt-last-label").textContent =
+    formatShortDate(log[log.length - 1].date) + " \u00B7 " + log[log.length - 1].weight + " kg (current)";
+
+  const trendNote = document.getElementById("wt-trend-note");
+  if (log.length < 2) {
+    trendNote.textContent = "First entry logged. Save your weight again another day to see your trend.";
+  } else {
+    const delta = log[log.length - 1].weight - log[0].weight;
+    if (Math.abs(delta) < 0.05) {
+      trendNote.textContent = "Weight steady since " + formatShortDate(log[0].date) + ".";
+    } else {
+      const dir = delta < 0 ? "Down" : "Up";
+      trendNote.textContent = dir + " " + Math.abs(delta).toFixed(1) + " kg since " + formatShortDate(log[0].date) + ".";
+    }
+  }
+}
+
+function initProfileForm() {
+  const form = document.getElementById("profile-form");
+  if (!form || form.dataset.bound) return;
+  form.dataset.bound = "1";
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const weightVal = document.getElementById("pf-weight").value;
+    const prevLog = Array.isArray(state.profile.weightLog) ? state.profile.weightLog : [];
+    state.profile = {
+      name: document.getElementById("pf-name").value.trim(),
+      age: document.getElementById("pf-age").value,
+      gender: document.getElementById("pf-gender").value,
+      weight: weightVal,
+      height: document.getElementById("pf-height").value,
+      activity: document.getElementById("pf-activity").value,
+      weightLog: prevLog,
+    };
+    logTodayWeight(weightVal);
+    saveState();
+    renderTargets();
+    renderWeightChart();
+    const ok = computeTargets(state.profile);
+    showToast(
+      ok
+        ? { title: "Profile Saved", message: "Your daily targets have been calculated." }
+        : { title: "Profile Saved", message: "Add age, weight & height to see your daily targets." },
+    );
+  });
+
+  const resetBtn = document.getElementById("wt-reset-btn");
+  resetBtn.addEventListener("click", () => {
+    showConfirm({
+      title: "Reset Weight Log",
+      message: "This clears your saved weight history. Your current profile stats stay as they are.",
+      confirmLabel: "Reset",
+      onConfirm: () => {
+        state.profile.weightLog = [];
+        saveState();
+        renderWeightChart();
+        showToast({ title: "Weight Log Reset", message: "Your weight history has been cleared." });
+      },
+    });
+  });
+}
+
+function openModal(type, dayData, editItem) {
+  modalCtx = { type, dayData, editItem };
+  const overlay = document.getElementById("modal-overlay");
+  const title = document.getElementById("modal-title");
+  const form = document.getElementById("modal-form");
+  form.reset();
+
+  document.querySelectorAll(".field-gym").forEach((el) => el.classList.toggle("hide", type !== "gym"));
+  document.querySelectorAll(".field-diet").forEach((el) => el.classList.toggle("hide", type !== "diet"));
+  document.getElementById("f-weight-label").textContent = type === "gym" ? "Weight (kg)" : "Portion weight (g)";
+
+  title.textContent = editItem
+    ? type === "gym" ? "Edit Exercise" : "Edit Meal"
+    : type === "gym" ? "Add Exercise" : "Add Meal";
+
+  if (editItem) {
+    document.getElementById("f-name").value = editItem.name;
+    document.getElementById("f-weight").value = editItem.weight;
+    if (type === "gym") {
+      document.getElementById("f-reps").value = editItem.reps;
+    } else {
+      document.getElementById("f-calories").value = editItem.calories;
+      document.getElementById("f-protein").value = editItem.protein;
+      document.getElementById("f-carbs").value = editItem.carbs;
+      document.getElementById("f-fat").value = editItem.fat;
+    }
+  }
+
+  overlay.classList.remove("hidden");
+  document.getElementById("f-name").focus();
+}
+
+function closeModal() {
+  document.getElementById("modal-overlay").classList.add("hidden");
+  modalCtx = null;
+}
+
+document.getElementById("modal-cancel").addEventListener("click", closeModal);
+document.getElementById("modal-overlay").addEventListener("click", (e) => {
+  if (e.target.id === "modal-overlay") closeModal();
+});
+
+document.getElementById("modal-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (!modalCtx) return;
+  const { type, dayData, editItem } = modalCtx;
+  const name = document.getElementById("f-name").value.trim();
+  if (!name) return;
+  const weight = Number(document.getElementById("f-weight").value) || 0;
+
+  if (type === "gym") {
+    const reps = Number(document.getElementById("f-reps").value) || 0;
+    if (editItem) {
+      editItem.name = name;
+      editItem.weight = weight;
+      editItem.reps = reps;
+    } else {
+      dayData.items.push({ id: genId(), name, weight, reps });
+    }
+  } else {
+    const calories = Number(document.getElementById("f-calories").value) || 0;
+    const protein = Number(document.getElementById("f-protein").value) || 0;
+    const carbs = Number(document.getElementById("f-carbs").value) || 0;
+    const fat = Number(document.getElementById("f-fat").value) || 0;
+    if (editItem) {
+      editItem.name = name;
+      editItem.weight = weight;
+      editItem.calories = calories;
+      editItem.protein = protein;
+      editItem.carbs = carbs;
+      editItem.fat = fat;
+    } else {
+      dayData.items.push({ id: genId(), name, weight, calories, protein, carbs, fat });
+    }
+  }
+
+  saveState();
+  closeModal();
+  if (type === "gym") renderGymDay(ui.gymDay);
+  else renderDietDay(ui.dietDay);
+});
+
+/* ===== streak calendar ===== */
+let cal = { y: new Date().getFullYear(), m: new Date().getMonth() };
+let calToday = "";
+
+function dateKey(d) {
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function dayNum(key) {
+  const [y, m, d] = key.split("-").map(Number);
+  return Math.round(Date.UTC(y, m - 1, d) / 86400000);
+}
+function computeStreaks() {
+  const keys = Object.keys(state.checkins || {}).sort();
+  let best = 0, run = 0, prev = null;
+  keys.forEach((k) => {
+    const n = dayNum(k);
+    run = prev !== null && n === prev + 1 ? run + 1 : 1;
+    best = Math.max(best, run);
+    prev = n;
+  });
+  const set = new Set(keys.map(dayNum));
+  const todayN = dayNum(dateKey(new Date()));
+  let n = set.has(todayN) ? todayN : todayN - 1; // streak survives until today ends
+  let current = 0;
+  while (set.has(n)) {
+    current++;
+    n--;
+  }
+  return { current, best };
+}
+function renderCalendar() {
+  const checks = state.checkins || {};
+  const todayKey = dateKey(new Date());
+  calToday = todayKey;
+  const first = new Date(cal.y, cal.m, 1);
+  const offset = (first.getDay() + 6) % 7; // Monday first
+  const days = new Date(cal.y, cal.m + 1, 0).getDate();
+  document.getElementById("cal-title").textContent = first
+    .toLocaleDateString(undefined, { month: "long", year: "numeric" })
+    .toUpperCase();
+  const grid = document.getElementById("cal-grid");
+  grid.innerHTML = "";
+  WEEKDAY_LABELS.forEach((w) => {
+    const h = document.createElement("div");
+    h.className = "cal-dow";
+    h.textContent = w[0];
+    grid.appendChild(h);
+  });
+  for (let i = 0; i < offset; i++) {
+    const e = document.createElement("div");
+    e.className = "cal-day empty";
+    grid.appendChild(e);
+  }
+  for (let d = 1; d <= days; d++) {
+    const key = dateKey(new Date(cal.y, cal.m, d));
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className =
+      "cal-day" + (checks[key] ? " checked" : "") + (key === todayKey ? " today" : "") + (key > todayKey ? " future" : "");
+    b.textContent = d;
+    b.addEventListener("click", () => {
+      if (!state.checkins) state.checkins = {};
+      if (state.checkins[key]) delete state.checkins[key];
+      else state.checkins[key] = true;
+      saveState();
+      renderCalendar();
+    });
+    grid.appendChild(b);
+  }
+  const s = computeStreaks();
+  document.getElementById("cal-current").textContent = s.current;
+  document.getElementById("cal-best").textContent = s.best;
+}
+function initCalendar() {
+  document.getElementById("cal-prev").addEventListener("click", () => {
+    cal.m--;
+    if (cal.m < 0) {
+      cal.m = 11;
+      cal.y--;
+    }
+    renderCalendar();
+  });
+  document.getElementById("cal-next").addEventListener("click", () => {
+    cal.m++;
+    if (cal.m > 11) {
+      cal.m = 0;
+      cal.y++;
+    }
+    renderCalendar();
+  });
+  setInterval(() => {
+    const now = new Date();
+    document.getElementById("cal-clock").innerHTML =
+      now.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "short" }) +
+      " &middot; <b>" + now.toLocaleTimeString() + "</b>";
+    if (calToday && dateKey(now) !== calToday) {
+      cal = { y: now.getFullYear(), m: now.getMonth() };
+      renderCalendar(); // midnight rollover
+    }
+  }, 1000);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const ready = loadState().then(() => {
+    updateStorageNote();
+    renderCalendar();
+  });
+  initSplash(ready);
+  initNav();
+  initDataActions();
+  initNumberSteppers();
+  initCalendar();
+});
+</script>
+</body>
+</html>
